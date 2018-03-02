@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+
+  <div id="formcontainer">
+
+
+    <form id="myForm"> 
+    <h1>Electronic Reserve Request Form</h1>
+      <label for="Instructor"><span class="red">*</span>Instructor Last Name:</label>
+      <div>
+        <input type="text" name="Instructor" id="Instructor">
+      </div>
+  
+      <br>
+      <label for="Email"><span class="red">*</span>Email Address:</label>
+      <div>
+        <input type="email" name="Email" id="Email">
+      </div>
+  
+      <br>
+      <label for="Department"><span class="red">*</span>Department:</label>
+      <div>
+        <input type="text" name="Department" id="Department">
+      </div>
+  
+        <br>
+      <label for="Course"><span class="red">*</span>Course Name and Number (ex: CISS 3300):</label>
+      <div>
+        <input type="text" name="Course" id="Course">
+      </div>
+      
+              <br>
+      <label for="Start_Date"><span class="red">*</span>Course Start Date:</label>
+      <div>
+        <input type="date" name="Start_Date" id="Start_Date">
+      </div>
+      
+              <br>
+      <label for="End_Date"><span class="red">*</span>Course End Date:</label>
+      <div>
+        <input type="date" name="End_Date" id="End_Date">
+      </div>
+      
+                    <br>
+      <label for="Comments">Additional Comments:</label>
+      <div>
+        <input type="text" name="Comments" id="Comments">
+      </div>
+      
+      
+      <br>
+      <label for="myFile"><strong>Upload Course Reading List (required):</strong><br>
+      Please upload Course Syllabus if available (Hold CTRL key to select more than one file)<br>
+     
+      <input type="file" name="filename" id="myFile" multiple>
+      
+       <span class="red">Please name files in this format:<br> 
+      LASTNAME_COURSE_Readings.docx<br>
+      LASTNAME_COURSE_Syllabus.docx</span> </label>
+      <br><br>
+
+      <input type="button" value="Submit" onclick="iteratorFileUpload()">
+
+
+    </form>
+  </div>
+
+  <div id="output"></div>
+<div id="progressbar">
+    <div class="progress-label"></div>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+<script>
+
+var numUploads = {};
+numUploads.done = 0;
+numUploads.total = 0;
+
+// Upload the files into a folder in drive
+// This is set to send them all to one folder (specificed in the .gs file)
+function iteratorFileUpload() {
+    var allFiles = document.getElementById('myFile').files;
+    var numFiles = allFiles.length;
+    if (allFiles.length == 0) {
+        alert('No file selected!');
+    } else {
+        //Show Progress Bar
+
+        numUploads.total = allFiles.length;
+        $('#progressbar').progressbar({
+        value : false
+        });//.append("<div class='caption'>37%</div>");
+        $(".progress-label").html('Preparing files for upload');
+        // Send each file at a time
+        for (var i = 0; i < allFiles.length; i++) {
+            console.log(i);
+            sendFileToDrive(allFiles[i]);
+            if (i == 0) {
+            sendDataToDrive();
+            }
+            
+        }
+    }
+}
+
+function sendFileToDrive(file) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        var content = reader.result;
+        console.log('Sending ' + file.name);
+        console.log('File Uploaded');
+        google.script.run.withSuccessHandler(updateProgressbar).uploadFileToDrive(content, file.name);
+    }
+    reader.readAsDataURL(file);
+}
+
+function sendDataToDrive() {
+        var Instructor = document.getElementById('Instructor').value;
+        var Email = document.getElementById('Email').value;
+        var Department = document.getElementById('Department').value;
+        var Course = document.getElementById('Course').value;
+        var Start_Date = document.getElementById('Start_Date').value;
+        var End_Date = document.getElementById('End_Date').value;
+        var Comments = document.getElementById('Comments').value;
+        google.script.run.uploadDataToDrive(Instructor, Email, Department, Course, Start_Date, End_Date, Comments);
+}
+
+
+function updateProgressbar( idUpdate ){
+   console.log('Received: ' + idUpdate);
+   numUploads.done++;
+   var porc = Math.ceil((numUploads.done / numUploads.total)*100);
+   $("#progressbar").progressbar({value: porc });
+   $(".progress-label").text(numUploads.done +'/'+ numUploads.total);
+   if( numUploads.done == numUploads.total ){
+      document.write("Thank you for submitting your request.")
+      //uploadsFinished();
+      numUploads.done = 0;
+   };
+}
+</script>
+
+  <script>
+    function fileUploaded(status) {
+      document.getElementById('myForm').style.display = 'none';
+      document.getElementById('output').innerHTML = status;
+    }
+
+  </script>
+
+  <style>
+    body {
+      font-family: verdana;
+      max-width: 650px;
+      padding: 20px;
+      margin: auto;
+    }
+    input {
+      display: inline-block;
+      width: 100%;
+      padding: 5px 0px 5px 5px;
+      margin-bottom: 10px;
+      -webkit-box-sizing: border-box;
+      ‌​ -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+    select {
+      margin: 5px 0px 15px 0px;
+    }
+    input[type="submit"] {
+      width: auto !important;
+      display: block !important;
+    }
+    input[type="file"] {
+      padding: 5px 0px 15px 0px !important;
+    }
+#progressbar{
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+    vertical-align: middle;
+
+}
+.progress-label {
+      float: left;
+      margin-top: 5px;
+      font-weight: bold;
+      text-shadow: 1px 1px 0 #fff;
+          width: 100%;
+    height: 100%;
+    position: absolute;
+    vertical-align: middle;
+    }
+    
+ .red {
+ color: red;
+ }
+  </style>
+
+  </body>
+</html>
